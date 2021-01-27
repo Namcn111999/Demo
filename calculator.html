@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://kit.fontawesome.com/9465599e2d.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <style>
+        .num, .action{
+            display: flex;
+            flex-wrap: wrap;
+        }
+        #number div{
+            flex: 1 0 32%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #number div, #action div{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border: solid .2px #ccc;
+        }
+        #number div{
+            height: 50px;
+        }
+        #action div{
+            flex: 1 0 100%;
+        }
+        #result{
+            height: 70px;
+            width: 100%;
+            background-color: #f5f5f5;
+        }
+        .control{
+            display: flex;
+        }
+        .c-left{
+            flex: 2;
+        }
+        #number{
+            flex:4;
+        }
+        #keyboard{
+            display: flex;
+        }
+        .c-right, #action{
+            flex: 1;
+            flex-wrap: wrap;
+        }
+        #result{
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            word-break: break-all;
+        }
+        ul{
+            text-align: right;
+            list-style: none;
+        }
+        .act-number{
+            color: #bbb;
+        }
+        .result-number{
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <div class="group">
+        <div class="control">
+            <div class="c-left">
+                <div id="result">
+
+                </div>
+                <div id="keyboard">
+                    <div class="num" id="number">
+
+                    </div>
+                    <div class="action" id="action">
+
+                    </div>
+                </div>
+            </div>
+            <div class="c-right">
+                <span>History</span><br/>
+                <div id="history">
+
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <script>
+        let isAct=false;
+        function appendHTML(id, content){
+            document.getElementById(id).innerHTML=content;
+        }
+        function clearHTML(action){
+           switch(action){
+                case "one":
+                    document.getElementById("result").innerHTML=document.getElementById("result").innerHTML.slice(0, -1);
+                    if(isAct){
+                        isAct=false;
+                    }
+                    break;
+                case "result":
+                    appendHTML("result",""); break;
+                default:
+                    appendHTML("result","");
+                    appendHTML("history","");
+                    localStorage.setItem("database", JSON.stringify([])); break;
+           }
+        }
+        function init(){
+            var num="";
+            num +="<div style='order: -3' onclick="+"clearHTML('one')"+">CC</div>"+
+            "<div style='order: -2' onclick="+"clearHTML('result')"+">CE</div>"+
+            "<div style='order: -1' onclick="+"clearHTML('all')"+">C</div>";
+            for(var i=0;i<10;i++){
+                num += "<div style='order: "+(i < 1 ?10:i)+" ' onclick='pressKey("+i+")'>"+i+"</div>";
+            }
+            appendHTML("number",num);
+            appendHTML("action","<div onclick="+"pressKey('*')"+">*</div><div onclick="+"pressKey('/')"+">/</div><div onclick="+"pressKey('-')"+">-</div><div onclick="+"pressKey('+')"+">+</div><div onclick='calculator()'>=</div>");
+        }
+        function pressKey(number){
+            var isNotNum= isNaN(number);
+            if(isNotNum){
+                if(isAct){
+                    appendHTML("result", document.getElementById("result").innerHTML.slice(0, -1) + number);
+                }else{
+                    isAct= true;
+                    appendHTML("result", document.getElementById("result").innerHTML + number);
+                }
+                return false;
+            }
+            isAct=false;
+            appendHTML("result", document.getElementById("result").innerHTML + number);
+        }
+        function calculator(){
+            var obj={
+                act:document.getElementById("result").innerText+"="
+            };
+            if(isAct){
+                document.getElementById("result").innerHTML=eval(document.getElementById("result").innerHTML.slice(0, -1));
+            }else{
+                document.getElementById("result").innerHTML=eval(document.getElementById("result").innerHTML);
+            }
+            obj.result=eval(document.getElementById("result").innerText);
+            setHistory(obj);
+            showHistory();
+            return false;
+        }
+        function setHistory(obj){
+            var localS= localStorage.getItem("database");
+            if(localS == null){
+                localStorage.setItem("database", JSON.stringify([obj]));
+            }else{
+                var current=JSON.parse(localS);
+                var newArray=[...current, obj];
+                localStorage.setItem("database", JSON.stringify(newArray));
+            }
+        }
+        function showHistory(){
+            var localS= localStorage.getItem("database");
+            if(localS != null){
+                var content="<ul>";
+                var obj=JSON.parse(localS);
+                for(var i=0;i<obj.length;i++){
+                    content+='<button class="btn-del"><i class="fas fa-times"></i></button>';
+                    content+= "<div>" +"<li class='act-number'>"+obj[i].act+"</li>" +"<li class='result-number'>"+obj[i].result+"</li>" +"</div>";
+                }
+                
+                content+="</ul>";
+                document.getElementById("history").innerHTML=content;
+                addClickEDelBtn();
+            }
+        }
+
+        function addClickEDelBtn() {
+            
+            document.querySelectorAll('.btn-del').forEach(function(elem, index){
+                elem.addEventListener('click', function(event) {
+                    event.currentTarget.nextSibling.style.display = "none";
+                    event.currentTarget.style.display = "none";
+                });
+            });
+        }
+        init();
+        showHistory();
+    </script>
+</body>
+</html>
